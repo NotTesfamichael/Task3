@@ -1,4 +1,4 @@
-name: Task2 Deploy Lambda Function
+name: Task3 Deploy Lambda Function
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  LAMBDA_FUNCTION_NAME: Task2LambdaFunction
+  LAMBDA_FUNCTION_NAME: Task3LambdaFunction
 
 jobs:
   deploy:
