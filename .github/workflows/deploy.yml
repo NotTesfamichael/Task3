@@ -1,0 +1,75 @@
+name: Deploy Lambda Function
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  LAMBDA_FUNCTION_NAME: MySimpleLambdaFunction
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy Lambda
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Zip the Lambda function
+        run: zip function.zip lambda.js
+
+      - name: Check if Lambda function exists
+        id: check_lambda
+        run: |
+          if aws lambda get-function --function-name ${{ env.LAMBDA_FUNCTION_NAME }}; then
+            echo "lambda_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "lambda_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create or Update Lambda function
+        run: |
+          if [ "${{ steps.check_lambda.outputs.lambda_exists }}" = "false" ]; then
+            echo "Creating Lambda function..."
+            aws lambda create-function \
+              --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+              --runtime nodejs18.x \
+              --role arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_LAMBDA_EXECUTION_ROLE \
+              --handler lambda.handler \
+              --zip-file fileb://function.zip
+          else
+            echo "Updating Lambda function..."
+            aws lambda update-function-code \
+              --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+              --zip-file fileb://function.zip \
+              --publish
+          fi
+
+      - name: Clean up
+        run: rm function.zip
