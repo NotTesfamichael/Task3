@@ -55,7 +55,7 @@ jobs:
             aws lambda create-function \
               --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
               --runtime nodejs18.x \
-              --role arn:aws:iam::445567074640:role/my-lambda-execution-role \
+              --role arn:aws:iam::050752627327:role/myLambdaTask3 \
               --handler lambda.handler \
               --zip-file fileb://function.zip
           else
